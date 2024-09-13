@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/pages/index.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1726241761414,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1726241772329,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,9 +5,9 @@\n   Route as ReactRoute,\n } from \"react-router-dom\";\n import routes from \"./configs\";\n import NotFound from \"./NotFound.jsx\";\n-import Navbar from \"../Navbar\";\n+import Navbar from \"../cNavbar\";\n \n export const RouterProvider = BrowserRouter;\n \n const Routes = () => {\n"
+                }
+            ],
+            "date": 1726241761414,
+            "name": "Commit-0",
+            "content": "import React from \"react\";\nimport {\n  BrowserRouter,\n  Routes as RouterRoutes,\n  Route as ReactRoute,\n} from \"react-router-dom\";\nimport routes from \"./configs\";\nimport NotFound from \"./NotFound.jsx\";\nimport Navbar from \".components/Navbar\";\n\nexport const RouterProvider = BrowserRouter;\n\nconst Routes = () => {\n  return (\n    <>\n      <Navbar />\n\n      <RouterRoutes>\n        {routes.map(({ path, exact, Component, secured, Layout }) => (\n          <ReactRoute\n            key=\"path\"\n            path={path}\n            element={\n              <Layout>\n                <Component />\n              </Layout>\n            }\n          />\n        ))}\n        <ReactRoute path=\"*\" element={<NotFound />} />\n      </RouterRoutes>\n    </>\n  );\n};\n\nexport default Routes;\n"
+        }
+    ]
+}

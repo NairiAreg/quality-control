@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/pages/configs.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1726241594348,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1726241601276,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,15 +1,6 @@\n import DefaultLayout from \"../containers/DefaultLayout\";\n-import MosaicGeneration from \"./MosaicGeneration\";\n-import MosaicGenerationOld from \"./MosaicGenerationOld\";\n-import Crop from \"./Crop\";\n-import Grid from \"./Grid\";\n-import LOD from \"./LOD\";\n-import LOD2 from \"./LOD2\";\n-import Statistics from \"./Statistics\";\n-import ImageGallery from \"./ImageGallery\";\n-import S3 from \"./S3\";\n-import Survey from \"./Survey\";\n+// import MosaicGeneration from \"./MosaicGeneration\";\n \n const routes = [\n   {\n     path: \"/\",\n@@ -17,8 +8,7 @@\n     Layout: DefaultLayout,\n     secured: false,\n     exact: true,\n   },\n-\n ];\n \n export default routes;\n"
+                }
+            ],
+            "date": 1726241594348,
+            "name": "Commit-0",
+            "content": "import DefaultLayout from \"../containers/DefaultLayout\";\nimport MosaicGeneration from \"./MosaicGeneration\";\nimport MosaicGenerationOld from \"./MosaicGenerationOld\";\nimport Crop from \"./Crop\";\nimport Grid from \"./Grid\";\nimport LOD from \"./LOD\";\nimport LOD2 from \"./LOD2\";\nimport Statistics from \"./Statistics\";\nimport ImageGallery from \"./ImageGallery\";\nimport S3 from \"./S3\";\nimport Survey from \"./Survey\";\n\nconst routes = [\n  {\n    path: \"/\",\n    Component: MosaicGeneration,\n    Layout: DefaultLayout,\n    secured: false,\n    exact: true,\n  },\n\n];\n\nexport default routes;\n"
+        }
+    ]
+}

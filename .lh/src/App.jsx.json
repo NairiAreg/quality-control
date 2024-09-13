@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/App.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1726241479358,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1726241479358,
+            "name": "Commit-0",
+            "content": "import React from \"react\";\nimport Routes, { RouterProvider } from \"./pages\";\nimport { ChakraProvider } from \"./providers\";\nimport { QueryClient, QueryClientProvider } from \"@tanstack/react-query\";\nconst queryClient = new QueryClient();\n\nfunction App() {\n  return (\n    <ChakraProvider>\n      <RouterProvider>\n        <QueryClientProvider client={queryClient}>\n          <Routes />\n        </QueryClientProvider>\n      </RouterProvider>\n    </ChakraProvider>\n  );\n}\n\nexport default App;\n"
+        }
+    ]
+}
