@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   Box,
   Tabs,
@@ -26,10 +26,16 @@ import {
   List,
   ListItem,
   useColorModeValue,
+  keyframes,
 } from "@chakra-ui/react";
 import { DeleteIcon, Upload, Menu, Trash2 } from "lucide-react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
 
 const QualityControlDashboard = () => {
   const [activeMainTab, setActiveMainTab] = useState(0);
@@ -62,38 +68,6 @@ const QualityControlDashboard = () => {
     "Therapy",
     "Triggers",
   ];
-
-  const [symptoms, setSymptoms] = useState([
-    "Abnormality of skeletal morphology",
-    "Delayed cognitive development",
-    "Delayed fine motor development",
-    "Delayed gross motor development",
-    "Delayed language development",
-    "Delayed motor development",
-    "Delayed speech and language development",
-    "Developmental delay",
-    "Developmental delay/intellectual disability",
-    "Developmental regression",
-    "Dysmorphic features",
-    "Global developmental delay",
-    "Intellectual developmental disorder",
-    "Microcephaly",
-    "Mild global developmental delay",
-    "Moderate global developmental delay",
-  ]);
-
-  const moveSymptom = useCallback(
-    (dragIndex, hoverIndex) => {
-      const dragSymptom = symptoms[dragIndex];
-      setSymptoms((prevSymptoms) => {
-        const newSymptoms = [...prevSymptoms];
-        newSymptoms.splice(dragIndex, 1);
-        newSymptoms.splice(hoverIndex, 0, dragSymptom);
-        return newSymptoms;
-      });
-    },
-    [symptoms]
-  );
 
   const EditView = () => (
     <VStack align="stretch" spacing={4}>
@@ -170,24 +144,64 @@ const QualityControlDashboard = () => {
   );
 
   const DraggableSymptom = ({ symptom, index, moveSymptom }) => {
-    const [, drag] = useDrag({
+    const ref = useRef(null);
+    const [{ isDragging }, drag] = useDrag({
       type: "SYMPTOM",
-      item: { index },
+      item: () => ({ id: `${symptom}_${index}`, index }),
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
     });
 
-    const [, drop] = useDrop({
+    const [{ handlerId }, drop] = useDrop({
       accept: "SYMPTOM",
-      hover: (draggedItem) => {
-        if (draggedItem.index !== index) {
-          moveSymptom(draggedItem.index, index);
-          draggedItem.index = index;
+      collect(monitor) {
+        return {
+          handlerId: monitor.getHandlerId(),
+        };
+      },
+      hover(item, monitor) {
+        if (!ref.current) {
+          return;
         }
+        const dragIndex = item.index;
+        const hoverIndex = index;
+
+        if (dragIndex === hoverIndex) {
+          return;
+        }
+
+        const hoverBoundingRect = ref.current?.getBoundingClientRect();
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        const clientOffset = monitor.getClientOffset();
+        const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+          return;
+        }
+
+        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+          return;
+        }
+
+        moveSymptom(dragIndex, hoverIndex);
+        item.index = hoverIndex;
       },
     });
 
+    drag(drop(ref));
+
     return (
-      <Tr ref={(node) => drag(drop(node))}>
-        <Td>{symptom}</Td>
+      <Tr
+        ref={ref}
+        bg={isDragging ? "green.100" : "white"}
+        boxShadow={isDragging ? "lg" : "none"}
+        transition="all 0.3s"
+        _hover={{ bg: "gray.50" }}
+        data-handler-id={handlerId}
+      >
+        <Td>{isDragging ? "" : symptom}</Td>
         <Td width="40px">
           <IconButton
             aria-label="Reorder"
@@ -195,6 +209,8 @@ const QualityControlDashboard = () => {
             size="sm"
             variant="ghost"
             cursor="move"
+            _hover={{ bg: "blue.100" }}
+            transition="all 0.2s"
           />
         </Td>
         <Td width="40px">
@@ -204,64 +220,131 @@ const QualityControlDashboard = () => {
             size="sm"
             colorScheme="red"
             variant="ghost"
+            _hover={{ bg: "red.100" }}
+            transition="all 0.2s"
           />
         </Td>
       </Tr>
     );
   };
 
-  const SymptomsView = () => (
-    <Grid templateColumns="1fr 2fr" gap={6}>
-      <GridItem>
-        <Heading as="h3" size="md" mb={4}>
-          Categories
-        </Heading>
-        <List spacing={2}>
-          {categories.map((category, index) => (
-            <ListItem key={index} p={2} bg="gray.100" borderRadius="md">
-              {category}
-            </ListItem>
-          ))}
-        </List>
-      </GridItem>
-      <GridItem>
-        <Heading as="h3" size="md" mb={4}>
-          Symptoms
-        </Heading>
-        <Table variant="simple">
-          <Tbody>
-            {symptoms.map((symptom, index) => (
-              <DraggableSymptom
-                key={`${symptom}_${index}`}
-                symptom={symptom}
-                index={index}
-                moveSymptom={moveSymptom}
-              />
+  const SymptomsView = () => {
+    const [symptoms, setSymptoms] = useState([
+      "Abnormality of skeletal morphology",
+      "Delayed cognitive development",
+      "Delayed fine motor development",
+      "Delayed gross motor development",
+      "Delayed language development",
+      "Delayed motor development",
+      "Delayed speech and language development",
+      "Developmental delay",
+      "Developmental delay/intellectual disability",
+      "Developmental regression",
+      "Dysmorphic features",
+      "Global developmental delay",
+      "Intellectual developmental disorder",
+      "Microcephaly",
+      "Mild global developmental delay",
+      "Moderate global developmental delay",
+    ]);
+
+    const moveSymptom = useCallback((dragIndex, hoverIndex) => {
+      setSymptoms((prevSymptoms) => {
+        const newSymptoms = [...prevSymptoms];
+        const draggedSymptom = newSymptoms[dragIndex];
+        newSymptoms.splice(dragIndex, 1);
+        newSymptoms.splice(hoverIndex, 0, draggedSymptom);
+        return newSymptoms;
+      });
+    }, []);
+
+    return (
+      <Grid templateColumns="1fr 2fr" gap={6}>
+        <GridItem>
+          <Heading as="h3" size="md" mb={4}>
+            Categories
+          </Heading>
+          <List spacing={2}>
+            {categories.map((category, index) => (
+              <ListItem
+                key={index}
+                p={2}
+                bg="gray.100"
+                borderRadius="md"
+                transition="all 0.2s"
+                _hover={{ bg: "gray.200", transform: "translateX(5px)" }}
+              >
+                {category}
+              </ListItem>
             ))}
-          </Tbody>
-        </Table>
-      </GridItem>
-    </Grid>
-  );
+          </List>
+        </GridItem>
+        <GridItem>
+          <Heading as="h3" size="md" mb={4}>
+            Symptoms
+          </Heading>
+          <Box
+            borderRadius="md"
+            overflow="hidden"
+            boxShadow="md"
+            bg="white"
+            transition="all 0.3s"
+            _hover={{ boxShadow: "lg" }}
+          >
+            <Table variant="simple">
+              <Tbody>
+                {symptoms.map((symptom, index) => (
+                  <DraggableSymptom
+                    key={symptom}
+                    symptom={symptom}
+                    index={index}
+                    moveSymptom={moveSymptom}
+                  />
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
+        </GridItem>
+      </Grid>
+    );
+  };
 
   return (
-    <Box p={5} bg={bgColor} borderRadius="lg" shadow="md">
+    <Box
+      p={5}
+      bg={bgColor}
+      borderRadius="lg"
+      shadow="md"
+      animation={`${fadeIn} 0.5s ease-in`}
+    >
       <Heading as="h1" size="xl" mb={6} color="red.500">
         Quality Control
       </Heading>
 
       <Tabs index={activeMainTab} onChange={setActiveMainTab}>
         <TabList>
-          <Tab>Genes</Tab>
-          <Tab>Symptoms</Tab>
+          <Tab _selected={{ color: "blue.500", borderColor: "blue.500" }}>
+            Genes
+          </Tab>
+          <Tab _selected={{ color: "blue.500", borderColor: "blue.500" }}>
+            Symptoms
+          </Tab>
         </TabList>
 
         <TabPanels>
           <TabPanel p={0}>
             <Tabs index={activeGeneSubTab} onChange={setActiveGeneSubTab}>
               <TabList mb={4}>
-                <Tab>Edit</Tab>
-                <Tab>Import</Tab>
+                <Tab
+                  _selected={{ color: "green.500", borderColor: "green.500" }}
+                >
+                  Edit
+                </Tab>
+                <Tab
+                  _selected={{ color: "green.500", borderColor: "green.500" }}
+                >
+                  Import
+                </Tab>
               </TabList>
               <TabPanels>
                 <TabPanel>
