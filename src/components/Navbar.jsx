@@ -54,9 +54,7 @@ const Navbar = () => {
             onClick={isOpen ? onClose : onOpen}
           />
           <HStack spacing={8} alignItems={"center"}>
-            <Box color="white" fontWeight="bold">
-              🟨 rePublic²
-            </Box>
+            <Box color="white" fontWeight="bold"></Box>
             <HStack
               as={"nav"}
               spacing={4}

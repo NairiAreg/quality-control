@@ -13,7 +13,7 @@ export const RouterProvider = BrowserRouter;
 const Routes = () => {
   return (
     <>
-      <Navbar />
+      {/* <Navbar /> */}
 
       <RouterRoutes>
         {routes.map(({ path, exact, Component, secured, Layout }) => (

@@ -27,8 +27,9 @@ import {
   ListItem,
   useColorModeValue,
   keyframes,
+  Flex,
 } from "@chakra-ui/react";
-import { DeleteIcon, Upload, Menu, Trash2 } from "lucide-react";
+import { Upload, Menu, Trash2, Download } from "lucide-react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
@@ -70,29 +71,32 @@ const QualityControlDashboard = () => {
   ];
 
   const EditView = () => (
-    <VStack align="stretch" spacing={4}>
-      <Box overflowX="auto">
-        <Table variant="simple" bg="white" borderRadius="md" overflow="hidden">
+    <Flex gap={6} alignItems="center">
+      <Box width="60%" overflowX="auto">
+        <Table
+          variant="simple"
+          bg="white"
+          borderRadius="md"
+          overflow="hidden"
+          size="sm"
+        >
           <Thead bg="gray.100">
             <Tr>
               <Th>Gene</Th>
-              <Th>Edit</Th>
-              <Th>Actions</Th>
+              <Th w="150px">Actions</Th>
             </Tr>
           </Thead>
           <Tbody>
             {geneFiles.map((file) => (
               <Tr key={file.name}>
                 <Td>{file.name}</Td>
-                <Td>
+                <Td w="150px">
                   <Button size="sm" colorScheme="blue">
                     Update
                   </Button>
-                </Td>
-                <Td>
                   <IconButton
                     aria-label="Delete file"
-                    icon={<DeleteIcon />}
+                    icon={<Trash2 />}
                     size="sm"
                     colorScheme="red"
                     variant="ghost"
@@ -103,7 +107,15 @@ const QualityControlDashboard = () => {
           </Tbody>
         </Table>
       </Box>
-    </VStack>
+      <VStack width="40%" spacing={4} align="stretch">
+        <Button leftIcon={<Download />} colorScheme="teal" size="md">
+          Download Configuration
+        </Button>
+        <Button leftIcon={<Upload />} colorScheme="purple" size="md">
+          Upload Configuration
+        </Button>
+      </VStack>
+    </Flex>
   );
 
   const ImportView = () => (
