@@ -1,5 +1,5 @@
 import DefaultLayout from "../containers/DefaultLayout";
-import Home from "./Home";
+import Home from "./QualityControlDashboard";
 
 const routes = [
   {

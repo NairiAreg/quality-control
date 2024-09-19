@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import routes from "./configs";
 import NotFound from "./NotFound.jsx";
-import Navbar from "../components/Navbar";
+// import Navbar from "../components/Navbar";
 
 export const RouterProvider = BrowserRouter;
 

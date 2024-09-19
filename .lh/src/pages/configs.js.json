@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 1,
+            "activePatchIndex": 2,
             "patches": [
                 {
                     "date": 1726241594348,
@@ -12,6 +12,10 @@
                 {
                     "date": 1726241601276,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,15 +1,6 @@\n import DefaultLayout from \"../containers/DefaultLayout\";\n-import MosaicGeneration from \"./MosaicGeneration\";\n-import MosaicGenerationOld from \"./MosaicGenerationOld\";\n-import Crop from \"./Crop\";\n-import Grid from \"./Grid\";\n-import LOD from \"./LOD\";\n-import LOD2 from \"./LOD2\";\n-import Statistics from \"./Statistics\";\n-import ImageGallery from \"./ImageGallery\";\n-import S3 from \"./S3\";\n-import Survey from \"./Survey\";\n+// import MosaicGeneration from \"./MosaicGeneration\";\n \n const routes = [\n   {\n     path: \"/\",\n@@ -17,8 +8,7 @@\n     Layout: DefaultLayout,\n     secured: false,\n     exact: true,\n   },\n-\n ];\n \n export default routes;\n"
+                },
+                {
+                    "date": 1726518629862,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,11 +1,11 @@\n import DefaultLayout from \"../containers/DefaultLayout\";\n-// import MosaicGeneration from \"./MosaicGeneration\";\n+import Home from \"./QualityControlDashboard QualityControlDashboard\";\n \n const routes = [\n   {\n     path: \"/\",\n-    Component: MosaicGeneration,\n+    Component: Home,\n     Layout: DefaultLayout,\n     secured: false,\n     exact: true,\n   },\n"
                 }
             ],
             "date": 1726241594348,
