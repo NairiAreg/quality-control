@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Box,
   Button,
@@ -12,19 +13,98 @@ import {
   Flex,
   Spinner,
   Text,
+  useToast,
 } from "@chakra-ui/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Upload, Trash2, Download } from "lucide-react";
-import { filesQuery } from "api/api-service.js";
+import {
+  filesQuery,
+  deleteExcelFile,
+  downloadConfiguration,
+  uploadConfiguration,
+} from "api/api-service.js";
 
 const EditView = () => {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
   const {
     data: files,
     isLoading: filesLoading,
     error: filesError,
-  } = useQuery(filesQuery);
+  } = useQuery(filesQuery());
+
+  const deleteFileMutation = useMutation({
+    mutationFn: deleteExcelFile,
+    onSuccess: () => {
+      queryClient.invalidateQueries("files");
+      toast({
+        title: "File deleted",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting file",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+  });
+
+  const handleDeleteFile = (fileId) => {
+    deleteFileMutation.mutate(fileId);
+  };
+
+  const handleDownloadConfiguration = async () => {
+    try {
+      await downloadConfiguration();
+    } catch (error) {
+      toast({
+        title: "Error downloading configuration",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const uploadConfigurationMutation = useMutation({
+    mutationFn: uploadConfiguration,
+    onSuccess: () => {
+      queryClient.invalidateQueries("files");
+      toast({
+        title: "Configuration uploaded successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error uploading configuration",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+  });
+
+  const handleUploadConfiguration = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      uploadConfigurationMutation.mutate(file);
+    }
+  };
+
   return (
-    <Flex gap={6} alignItems="center">
+    <Flex gap={6} alignItems="flex-start">
       <Box width="60%" overflowX="auto">
         {filesLoading ? (
           <Spinner />
@@ -40,24 +120,23 @@ const EditView = () => {
           >
             <Thead bg="gray.100">
               <Tr>
-                <Th>Gene</Th>
-                <Th w="150px">Actions</Th>
+                <Th>Gene Excel File</Th>
+                <Th w="100px">Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
               {files.map((file) => (
                 <Tr key={file}>
                   <Td>{file}</Td>
-                  <Td w="150px">
-                    <Button size="sm" colorScheme="blue">
-                      Update
-                    </Button>
+                  <Td w="100px">
                     <IconButton
                       aria-label="Delete file"
                       icon={<Trash2 />}
                       size="sm"
                       colorScheme="red"
                       variant="ghost"
+                      onClick={() => handleDeleteFile(file)}
+                      isLoading={deleteFileMutation.isLoading}
                     />
                   </Td>
                 </Tr>
@@ -67,11 +146,22 @@ const EditView = () => {
         )}
       </Box>
       <VStack width="40%" spacing={4} align="stretch">
-        <Button leftIcon={<Download />} colorScheme="teal" size="md">
+        <Button
+          leftIcon={<Download />}
+          colorScheme="teal"
+          size="md"
+          onClick={handleDownloadConfiguration}
+        >
           Download Configuration
         </Button>
-        <Button leftIcon={<Upload />} colorScheme="purple" size="md">
+        <Button leftIcon={<Upload />} colorScheme="purple" size="md" as="label">
           Upload Configuration
+          <input
+            type="file"
+            hidden
+            accept=".zip"
+            onChange={handleUploadConfiguration}
+          />
         </Button>
       </VStack>
     </Flex>
