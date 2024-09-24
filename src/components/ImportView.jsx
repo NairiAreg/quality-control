@@ -102,7 +102,7 @@ const ImportView = () => {
         </label>
         {selectedFile && <Text mt={2}>{selectedFile.name}</Text>}
         <Button
-          mt={2}
+          ml={2}
           colorScheme="green"
           onClick={handleUpload}
           isLoading={uploadMutation.isPending}

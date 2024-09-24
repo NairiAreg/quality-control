@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8082/api";
+const BASE_URL = "http://localhost:8080/api";
 
 export const filesQuery = () => ({
   queryKey: ["files"],
@@ -26,6 +26,14 @@ export const categoriesQuery = () => ({
   },
 });
 
+export const updateSymptomCategory = () => ({
+  // queryKey: ["categories"],
+  // queryFn: async () => {
+  //   const response = await axios.get(`${BASE_URL}/gene/list_categories`);
+  //   return response.data;
+  // },
+});
+
 export const symptomsQuery = (geneId) => ({
   queryKey: ["symptoms", geneId],
   queryFn: async () => {
@@ -38,6 +46,10 @@ export const symptomsQuery = (geneId) => ({
 
 export const deleteExcelFile = async (fileId) => {
   await axios.delete(`${BASE_URL}/gene/delete_excel_file?fileId=${fileId}`);
+};
+
+export const deleteSymptom = async (symptomId) => {
+  await axios.delete(`${BASE_URL}/gene/delete_symptom?symptomId=${symptomId}`);
 };
 
 export const uploadGeneExcelFile = async (file) => {

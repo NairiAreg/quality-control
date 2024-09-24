@@ -1,151 +1,232 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Box,
-  Table,
-  Tbody,
+  VStack,
+  HStack,
   Heading,
-  Grid,
-  GridItem,
-  List,
-  ListItem,
-  Spinner,
   Text,
-  Select,
-  Input,
+  Spinner,
+  useToast,
 } from "@chakra-ui/react";
-import { useQuery } from "@tanstack/react-query";
-import { categoriesQuery, genesQuery, symptomsQuery } from "api/api-service.js";
-import DraggableSymptom from "./DraggableSymptom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  genesQuery,
+  symptomsQuery,
+  deleteSymptom,
+  updateSymptomCategory,
+} from "api/api-service.js";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import DraggableItem from "./DraggableItem";
+import CustomDropdown from "./CustomDropdown";
 
 const SymptomsView = () => {
   const [selectedGene, setSelectedGene] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [symptomsData, setSymptomsData] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const toast = useToast();
+  const queryClient = useQueryClient();
 
+  const { data: genes, isLoading: genesLoading } = useQuery(genesQuery());
   const {
-    data: categories,
-    isLoading: categoriesLoading,
-    error: categoriesError,
-  } = useQuery(categoriesQuery());
-  const {
-    data: genes,
-    isLoading: genesLoading,
-    error: genesError,
-  } = useQuery(genesQuery());
-  const {
-    data: symptoms,
+    data: initialSymptomsData,
     isLoading: symptomsLoading,
     error: symptomsError,
   } = useQuery({
     ...symptomsQuery(selectedGene),
     enabled: !!selectedGene,
   });
-  const setSymptoms = () => {
-    //TODO
-  };
-  const moveSymptom = useCallback((dragIndex, hoverIndex) => {
-    setSymptoms((prevSymptoms) => {
-      const newSymptoms = [...prevSymptoms];
-      const draggedSymptom = newSymptoms[dragIndex];
-      newSymptoms.splice(dragIndex, 1);
-      newSymptoms.splice(hoverIndex, 0, draggedSymptom);
-      return newSymptoms;
-    });
-  }, []);
-  const filteredGenes =
-    genes?.filter((gene) =>
-      gene.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+
+  useEffect(() => {
+    if (initialSymptomsData) {
+      setSymptomsData(initialSymptomsData);
+      setSelectedCategory(Object.keys(initialSymptomsData)[0] || "");
+    }
+  }, [initialSymptomsData]);
+
+  const deleteSymptomMutation = useMutation({
+    mutationFn: deleteSymptom,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["symptoms", selectedGene]);
+      toast({
+        title: "Symptom deleted",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting symptom",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+  });
+
+  const updateSymptomCategoryMutation = useMutation({
+    mutationFn: updateSymptomCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["symptoms", selectedGene]);
+      toast({
+        title: "Symptom category updated",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating symptom category",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+  });
+
+  const moveItem = useCallback(
+    (
+      dragIndex,
+      hoverIndex,
+      draggedItem,
+      dragType,
+      hoverType,
+      dragCategory,
+      hoverCategory
+    ) => {
+      setSymptomsData((prevData) => {
+        const newData = { ...prevData };
+        if (dragType === "SYMPTOM") {
+          if (hoverType === "SYMPTOM" && dragCategory === hoverCategory) {
+            // Reorder within the same category
+            const newSymptoms = [...newData[dragCategory]];
+            newSymptoms.splice(dragIndex, 1);
+            newSymptoms.splice(hoverIndex, 0, draggedItem);
+            newData[dragCategory] = newSymptoms;
+          } else if (
+            hoverType === "CATEGORY" &&
+            dragCategory !== hoverCategory
+          ) {
+            // Move to a different category
+            newData[dragCategory] = newData[dragCategory].filter(
+              (s) => s !== draggedItem
+            );
+            if (!newData[hoverCategory]) {
+              newData[hoverCategory] = [];
+            }
+            newData[hoverCategory].push(draggedItem);
+            // Call the mutation to update the backend (commented out for now)
+            // updateSymptomCategoryMutation.mutate({
+            //   symptom: draggedItem,
+            //   newCategory: hoverCategory,
+            // });
+          }
+        }
+        return newData;
+      });
+    },
+    [updateSymptomCategoryMutation]
+  );
+
+  const handleDeleteSymptom = useCallback(
+    (symptom) => {
+      deleteSymptomMutation.mutate(symptom);
+      setSymptomsData((prevData) => {
+        const newData = { ...prevData };
+        Object.keys(newData).forEach((category) => {
+          newData[category] = newData[category].filter((s) => s !== symptom);
+        });
+        return newData;
+      });
+    },
+    [deleteSymptomMutation]
+  );
+
+  const categories = symptomsData ? Object.keys(symptomsData) : [];
 
   return (
-    <Grid templateColumns="1fr 1fr 2fr" gap={6}>
-      <GridItem>
-        <Heading as="h3" size="md" mb={4}>
-          Categories
-        </Heading>
-        {categoriesLoading ? (
-          <Spinner />
-        ) : categoriesError ? (
-          <Text color="red.500">
-            Error loading categories: {categoriesError.message}
-          </Text>
-        ) : (
-          <List spacing={2}>
-            {categories.map((category, index) => (
-              <ListItem
-                key={index}
-                p={2}
-                bg="gray.100"
-                borderRadius="md"
-                transition="all 0.2s"
-                _hover={{ bg: "gray.200", transform: "translateX(5px)" }}
-              >
-                {category}
-              </ListItem>
-            ))}
-          </List>
-        )}
-      </GridItem>
-      <GridItem>
-        <Heading as="h3" size="md" mb={4}>
-          Genes
-        </Heading>
-        <Box mb={4}>
-          <Input
-            placeholder="Search genes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            mb={2}
-          />
-          <Select
-            placeholder="Select a gene"
+    <DndProvider backend={HTML5Backend}>
+      <VStack spacing={6} align="stretch">
+        <Box>
+          <Heading as="h3" size="md" mb={4}>
+            Select Gene
+          </Heading>
+          <CustomDropdown
+            options={genes || []}
             value={selectedGene}
-            onChange={(e) => setSelectedGene(e.target.value)}
-          >
-            {filteredGenes.map((gene) => (
-              <option key={gene} value={gene}>
-                {gene}
-              </option>
-            ))}
-          </Select>
+            onChange={(gene) => {
+              setSelectedGene(gene);
+              setSymptomsData({});
+              setSelectedCategory("");
+            }}
+            placeholder="Select a gene"
+          />
         </Box>
-      </GridItem>
-      <GridItem>
-        <Heading as="h3" size="md" mb={4}>
-          Symptoms
-        </Heading>
-        {symptomsLoading ? (
-          <Spinner />
-        ) : symptomsError ? (
-          <Text color="red.500">
-            Error loading symptoms: {symptomsError.message}
-          </Text>
-        ) : symptoms ? (
-          <Box
-            borderRadius="md"
-            overflow="hidden"
-            boxShadow="md"
-            bg="white"
-            transition="all 0.3s"
-            _hover={{ boxShadow: "lg" }}
-          >
-            <Table variant="simple">
-              <Tbody>
-                {symptoms.map((symptom, index) => (
-                  <DraggableSymptom
-                    key={symptom}
-                    symptom={symptom}
-                    index={index}
-                    moveSymptom={moveSymptom}
-                  />
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
-        ) : (
-          <Text>Select a gene to view symptoms</Text>
+
+        {selectedGene && (
+          <HStack spacing={6} align="flex-start">
+            <Box flex={1}>
+              <Heading as="h3" size="md" mb={4}>
+                Categories
+              </Heading>
+              {symptomsLoading ? (
+                <Spinner />
+              ) : symptomsError ? (
+                <Text color="red.500">
+                  Error loading categories: {symptomsError.message}
+                </Text>
+              ) : (
+                <VStack align="stretch" spacing={2}>
+                  {categories.map((category, index) => (
+                    <DraggableItem
+                      key={`${category}_${index}`}
+                      item={category}
+                      index={index}
+                      type="CATEGORY"
+                      moveItem={moveItem}
+                      onClick={() => setSelectedCategory(category)}
+                      isSelected={category === selectedCategory}
+                    />
+                  ))}
+                </VStack>
+              )}
+            </Box>
+            <Box flex={1}>
+              <Heading as="h3" size="md" mb={4}>
+                Symptoms
+              </Heading>
+              {symptomsLoading ? (
+                <Spinner />
+              ) : symptomsError ? (
+                <Text color="red.500">
+                  Error loading symptoms: {symptomsError.message}
+                </Text>
+              ) : selectedCategory ? (
+                <VStack align="stretch" spacing={2}>
+                  {symptomsData[selectedCategory]?.map((symptom, index) => (
+                    <DraggableItem
+                      key={`${selectedCategory}-${symptom}`}
+                      item={symptom}
+                      index={index}
+                      type="SYMPTOM"
+                      category={selectedCategory}
+                      moveItem={moveItem}
+                      onDelete={() => handleDeleteSymptom(symptom)}
+                    />
+                  ))}
+                </VStack>
+              ) : (
+                <Text>Select a category to view symptoms</Text>
+              )}
+            </Box>
+          </HStack>
         )}
-      </GridItem>
-    </Grid>
+      </VStack>
+    </DndProvider>
   );
 };
 
