@@ -44,12 +44,34 @@ const SymptomsView = () => {
     }
   }, [initialSymptomsData]);
 
-  const deleteSymptomMutation = useMutation({
-    mutationFn: deleteSymptom,
+  // const deleteSymptomMutation = useMutation({
+  //   mutationFn: deleteSymptom,
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries(["symptoms", selectedGene]);
+  //     toast({
+  //       title: "Symptom deleted",
+  //       status: "success",
+  //       duration: 3000,
+  //       isClosable: true,
+  //     });
+  //   },
+  //   onError: (error) => {
+  //     toast({
+  //       title: "Error deleting symptom",
+  //       description: error.message,
+  //       status: "error",
+  //       duration: 3000,
+  //       isClosable: true,
+  //     });
+  //   },
+  // });
+
+  const updateSymptomCategoryMutation = useMutation({
+    mutationFn: updateSymptomCategory,
     onSuccess: () => {
       queryClient.invalidateQueries(["symptoms", selectedGene]);
       toast({
-        title: "Symptom deleted",
+        title: "Symptom order updated",
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -57,7 +79,7 @@ const SymptomsView = () => {
     },
     onError: (error) => {
       toast({
-        title: "Error deleting symptom",
+        title: "Error updating symptom order",
         description: error.message,
         status: "error",
         duration: 3000,
@@ -66,27 +88,23 @@ const SymptomsView = () => {
     },
   });
 
-  const updateSymptomCategoryMutation = useMutation({
-    mutationFn: updateSymptomCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["symptoms", selectedGene]);
-      toast({
-        title: "Symptom category updated",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
+  const updateBackend = useCallback(
+    (newData) => {
+      const updatedSymptoms = [];
+      Object.entries(newData).forEach(([category, symptoms]) => {
+        symptoms.forEach((symptom, index) => {
+          updatedSymptoms.push({
+            geneName: selectedGene,
+            symptomName: symptom,
+            categoryName: category,
+            order: index,
+          });
+        });
       });
+      updateSymptomCategoryMutation.mutate(updatedSymptoms);
     },
-    onError: (error) => {
-      toast({
-        title: "Error updating symptom category",
-        description: error.message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    },
-  });
+    [selectedGene, updateSymptomCategoryMutation]
+  );
 
   const moveItem = useCallback(
     (
@@ -96,7 +114,8 @@ const SymptomsView = () => {
       dragType,
       hoverType,
       dragCategory,
-      hoverCategory
+      hoverCategory,
+      isFinalDrop
     ) => {
       setSymptomsData((prevData) => {
         const newData = { ...prevData };
@@ -119,31 +138,37 @@ const SymptomsView = () => {
               newData[hoverCategory] = [];
             }
             newData[hoverCategory].push(draggedItem);
-            // Call the mutation to update the backend (commented out for now)
-            // updateSymptomCategoryMutation.mutate({
-            //   symptom: draggedItem,
-            //   newCategory: hoverCategory,
-            // });
           }
         }
+
+        if (isFinalDrop) {
+          updateBackend(newData);
+        }
+
         return newData;
       });
     },
-    [updateSymptomCategoryMutation]
+    [updateBackend]
   );
 
   const handleDeleteSymptom = useCallback(
     (symptom) => {
-      deleteSymptomMutation.mutate(symptom);
       setSymptomsData((prevData) => {
         const newData = { ...prevData };
         Object.keys(newData).forEach((category) => {
-          newData[category] = newData[category].filter((s) => s !== symptom);
+          if (category !== "Archived") {
+            newData[category] = newData[category].filter((s) => s !== symptom);
+          }
         });
+        if (!newData["Archived"]) {
+          newData["Archived"] = [];
+        }
+        newData["Archived"].push(symptom);
+        updateBackend(newData);
         return newData;
       });
     },
-    [deleteSymptomMutation]
+    [updateBackend]
   );
 
   const categories = symptomsData ? Object.keys(symptomsData) : [];

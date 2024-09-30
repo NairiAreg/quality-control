@@ -26,13 +26,13 @@ export const categoriesQuery = () => ({
   },
 });
 
-export const updateSymptomCategory = () => ({
-  // queryKey: ["categories"],
-  // queryFn: async () => {
-  //   const response = await axios.get(`${BASE_URL}/gene/list_categories`);
-  //   return response.data;
-  // },
-});
+export const updateSymptomCategory = async (updatedSymptoms) => {
+  const response = await axios.post(
+    `${BASE_URL}/gene/set_symptom_order`,
+    updatedSymptoms
+  );
+  return response.data;
+};
 
 export const symptomsQuery = (geneId) => ({
   queryKey: ["symptoms", geneId],

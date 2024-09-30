@@ -88,19 +88,16 @@ const DraggableItem = ({
       const dragIndex = draggedItem.index;
       const dragType = draggedItem.type;
       const dragCategory = draggedItem.category;
-
-      // Handle dropping symptom onto category
-      if (dragType === "SYMPTOM" && type === "CATEGORY") {
-        moveItem(
-          dragIndex,
-          0,
-          draggedItem.item,
-          dragType,
-          type,
-          dragCategory,
-          item
-        );
-      }
+      moveItem(
+        dragIndex,
+        0,
+        draggedItem.item,
+        dragType,
+        type,
+        dragCategory,
+        item,
+        true
+      );
     },
   });
 
@@ -112,6 +109,21 @@ const DraggableItem = ({
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
+    end: (draggedItem, monitor) => {
+      const didDrop = monitor.didDrop();
+      if (!didDrop) {
+        moveItem(
+          draggedItem.index,
+          draggedItem.index,
+          draggedItem.item,
+          draggedItem.type,
+          draggedItem.type,
+          draggedItem.category,
+          draggedItem.category,
+          true // This indicates it's the final drop
+        );
+      }
+    },
   });
 
   drag(drop(ref));
