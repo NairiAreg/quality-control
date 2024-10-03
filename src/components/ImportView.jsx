@@ -45,13 +45,22 @@ const ImportView = () => {
 
   const uploadMutation = useMutation({
     mutationFn: uploadGeneExcelFile,
-    onSuccess: () => {
-      toast({
-        title: "File uploaded successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+    onSuccess: ({ data }) => {
+      if (data.includes("ERROR")) {
+        toast({
+          title: "Error uploading file",
+          description: data,
+          status: "error",
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: "File uploaded successfully",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
       setUploadProgress(100);
       queryClient.invalidateQueries(["files"]);
     },

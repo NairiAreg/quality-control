@@ -12,7 +12,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   genesQuery,
   symptomsQuery,
-  deleteSymptom,
   updateSymptomCategory,
 } from "api/api-service.js";
 import { DndProvider } from "react-dnd";

@@ -22,6 +22,7 @@ import {
   deleteExcelFile,
   downloadConfiguration,
   uploadConfiguration,
+  updateExcelFile,
 } from "api/api-service.js";
 
 const EditView = () => {
@@ -56,8 +57,46 @@ const EditView = () => {
     },
   });
 
+  const updateFileMutation = useMutation({
+    mutationFn: ({ fileId, newFile }) => updateExcelFile(fileId, newFile),
+    onSuccess: ({ data }) => {
+      queryClient.invalidateQueries("files");
+      if (data.includes("ERROR")) {
+        toast({
+          title: "Error uploading file",
+          description: data,
+          status: "error",
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: "File uploaded successfully",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating file",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+  });
+
   const handleDeleteFile = (fileId) => {
     deleteFileMutation.mutate(fileId);
+  };
+
+  const handleUpdateFile = (fileId, event) => {
+    const newFile = event.target.files[0];
+    if (newFile) {
+      updateFileMutation.mutate({ fileId, newFile });
+    }
   };
 
   const handleDownloadConfiguration = async () => {
@@ -121,14 +160,33 @@ const EditView = () => {
             <Thead bg="gray.100">
               <Tr>
                 <Th>Gene Excel File</Th>
-                <Th w="100px">Actions</Th>
+                <Th w="120px">Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
               {files.map((file) => (
                 <Tr key={file}>
                   <Td>{file}</Td>
-                  <Td w="100px">
+                  <Td w="120px">
+                    <IconButton
+                      aria-label="Update file"
+                      icon={<Upload />}
+                      size="sm"
+                      colorScheme="blue"
+                      variant="ghost"
+                      mr={2}
+                      isLoading={updateFileMutation.isLoading}
+                      onClick={() =>
+                        document.getElementById(`file-input-${file}`).click()
+                      }
+                    />
+                    <input
+                      id={`file-input-${file}`}
+                      type="file"
+                      hidden
+                      accept=".xls,.xlsx"
+                      onChange={(e) => handleUpdateFile(file, e)}
+                    />
                     <IconButton
                       aria-label="Delete file"
                       icon={<Trash2 />}
